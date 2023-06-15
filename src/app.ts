@@ -1,18 +1,32 @@
-import express, { Application, Request, Response } from 'express'
-import cors from 'cors'
-const app: Application = express()
-//routes
-import userRoutes from './app/modules/users.routes'
+import cors from 'cors';
+import express, { Application, NextFunction, Request, Response } from 'express';
+import httpStatus from 'http-status';
+import { globalErrorHandler } from './middlewares/globalErrorHandler';
+import router from './routes';
+
+const app: Application = express();
+
 //
-app.use(cors())
+app.use(cors());
 //parser
-app.use(express.json())
-app.use(express.urlencoded({ extended: true }))
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 //use route
-app.use('/api/v1/user', userRoutes)
+app.use('/api/v1', router);
 
 app.get('/', (req: Request, res: Response) => {
-  res.send('Server is Listening..')
-})
-export default app
+  res.send('Server is Listening..');
+});
+//global error handler
+app.use(globalErrorHandler);
+//handle not found
+app.use((req: Request, res: Response, next: NextFunction) => {
+  res.status(httpStatus.NOT_FOUND).json({
+    success: false,
+    message: 'Not found',
+    errorMessgaes: [{ path: req.originalUrl, message: 'Api not found' }],
+  });
+  next();
+});
+export default app;
